@@ -1,0 +1,288 @@
+{
+  "name": "jlink-mcp",
+  "displayName": "J-Link MCP \u2014 Embedded Debugging for AI Agents",
+  "description": "MCP server for SEGGER J-Link debug probes \u2014 LLM-driven embedded debugging with RTT, GDB server, and Trice/Pigweed support",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Klievan/jlink-mcp"
+  },
+  "homepage": "https://github.com/Klievan/jlink-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/Klievan/jlink-mcp/issues"
+  },
+  "version": "0.7.0",
+  "publisher": "Klievan",
+  "icon": "logo.png",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.110.0"
+  },
+  "categories": [
+    "Debuggers",
+    "AI",
+    "Other"
+  ],
+  "keywords": [
+    "jlink",
+    "j-link",
+    "segger",
+    "embedded",
+    "firmware",
+    "debugger",
+    "gdb",
+    "rtt",
+    "swd",
+    "jtag",
+    "cortex-m",
+    "arm",
+    "microcontroller",
+    "mcu",
+    "nrf52",
+    "nordic",
+    "stm32",
+    "zephyr",
+    "svd",
+    "cmsis",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "copilot",
+    "ai",
+    "llm",
+    "openocd",
+    "blackmagic",
+    "trice",
+    "pigweed"
+  ],
+  "bin": {
+    "jlink-mcp": "./out/mcp/standalone.js"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "jlinkMcp.showStatus",
+        "title": "J-Link MCP: Show Status",
+        "category": "J-Link"
+      },
+      {
+        "command": "jlinkMcp.startGdbServer",
+        "title": "J-Link MCP: Start GDB Server",
+        "category": "J-Link"
+      },
+      {
+        "command": "jlinkMcp.stopGdbServer",
+        "title": "J-Link MCP: Stop GDB Server",
+        "category": "J-Link"
+      },
+      {
+        "command": "jlinkMcp.connectRtt",
+        "title": "J-Link MCP: Connect RTT",
+        "category": "J-Link"
+      },
+      {
+        "command": "jlinkMcp.disconnectRtt",
+        "title": "J-Link MCP: Disconnect RTT",
+        "category": "J-Link"
+      },
+      {
+        "command": "jlinkMcp.startTelnetProxy",
+        "title": "J-Link MCP: Start Telnet Proxy",
+        "category": "J-Link"
+      },
+      {
+        "command": "jlinkMcp.stopTelnetProxy",
+        "title": "J-Link MCP: Stop Telnet Proxy",
+        "category": "J-Link"
+      },
+      {
+        "command": "jlinkMcp.flashFirmware",
+        "title": "J-Link MCP: Flash Firmware",
+        "category": "J-Link"
+      },
+      {
+        "command": "jlinkMcp.showOutput",
+        "title": "J-Link MCP: Show Output Log",
+        "category": "J-Link"
+      },
+      {
+        "command": "jlinkMcp.showRttOutput",
+        "title": "J-Link MCP: Show RTT Output",
+        "category": "J-Link"
+      },
+      {
+        "command": "jlinkMcp.freeProbe",
+        "title": "J-Link: Free the probe (stop the GDB server)",
+        "category": "J-Link MCP"
+      }
+    ],
+    "configuration": {
+      "title": "J-Link MCP",
+      "properties": {
+        "jlinkMcp.probeType": {
+          "type": "string",
+          "enum": [
+            "jlink",
+            "openocd",
+            "blackmagic"
+          ],
+          "default": "jlink",
+          "description": "Debug probe backend. OpenOCD covers ST-Link, CMSIS-DAP and FTDI adapters."
+        },
+        "jlinkMcp.gdbPath": {
+          "type": "string",
+          "default": "arm-none-eabi-gdb",
+          "description": "GDB used for source-level debugging. gdb-multiarch works if you have no ARM-specific build."
+        },
+        "jlinkMcp.jlink.installDir": {
+          "type": "string",
+          "default": "",
+          "description": "Path to SEGGER J-Link installation directory (auto-detected if empty)"
+        },
+        "jlinkMcp.jlink.device": {
+          "type": "string",
+          "default": "Unspecified",
+          "description": "Target device name (e.g., NRF52840_XXAA, STM32F407VG)"
+        },
+        "jlinkMcp.jlink.interface": {
+          "type": "string",
+          "enum": [
+            "SWD",
+            "JTAG"
+          ],
+          "default": "SWD",
+          "description": "Debug interface"
+        },
+        "jlinkMcp.jlink.speed": {
+          "type": "number",
+          "default": 4000,
+          "description": "Connection speed in kHz"
+        },
+        "jlinkMcp.jlink.serialNumber": {
+          "type": "string",
+          "default": "",
+          "description": "J-Link serial number (for multi-probe setups)"
+        },
+        "jlinkMcp.jlink.gdbPort": {
+          "type": "number",
+          "default": 2331,
+          "description": "GDB server port"
+        },
+        "jlinkMcp.jlink.rttTelnetPort": {
+          "type": "number",
+          "default": 19021,
+          "description": "RTT telnet port"
+        },
+        "jlinkMcp.jlink.swoTelnetPort": {
+          "type": "number",
+          "default": 2332,
+          "description": "SWO telnet port"
+        },
+        "jlinkMcp.telnetProxy.listenPort": {
+          "type": "number",
+          "default": 19400,
+          "description": "Telnet proxy listen port for Trice/Pigweed"
+        },
+        "jlinkMcp.telnetProxy.sourcePort": {
+          "type": "number",
+          "default": 19021,
+          "description": "Source port to proxy (usually RTT telnet port)"
+        },
+        "jlinkMcp.telnetProxy.sourceHost": {
+          "type": "string",
+          "default": "localhost",
+          "description": "Source host for telnet proxy"
+        },
+        "jlinkMcp.openocd.binaryPath": {
+          "type": "string",
+          "default": "openocd",
+          "description": "Path to the openocd binary"
+        },
+        "jlinkMcp.openocd.interfaceConfig": {
+          "type": "string",
+          "default": "interface/stlink.cfg",
+          "description": "OpenOCD interface config (e.g. interface/stlink.cfg, interface/cmsis-dap.cfg)"
+        },
+        "jlinkMcp.openocd.targetConfig": {
+          "type": "string",
+          "default": "target/stm32f4x.cfg",
+          "description": "OpenOCD target config (e.g. target/stm32f4x.cfg, target/nrf52.cfg)"
+        },
+        "jlinkMcp.openocd.gdbPort": {
+          "type": "number",
+          "default": 3333,
+          "description": "OpenOCD GDB server port"
+        },
+        "jlinkMcp.openocd.telnetPort": {
+          "type": "number",
+          "default": 4444,
+          "description": "OpenOCD telnet/monitor port"
+        },
+        "jlinkMcp.blackmagic.gdbPath": {
+          "type": "string",
+          "default": "arm-none-eabi-gdb",
+          "description": "GDB binary used to drive a Black Magic Probe"
+        },
+        "jlinkMcp.blackmagic.serialPort": {
+          "type": "string",
+          "default": "",
+          "description": "BMP serial port (e.g. /dev/cu.usbmodemXXXX). Auto-detected when empty."
+        },
+        "jlinkMcp.blackmagic.targetIndex": {
+          "type": "number",
+          "default": 1,
+          "description": "Target index reported by the probe's scan"
+        },
+        "jlinkMcp.svdPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a CMSIS-SVD file for the target. Enables symbolic peripheral reads (list_peripherals, read_peripheral, decode_register). Vendors publish these; the same file Cortex-Debug uses as svdFile works here."
+        },
+        "jlinkMcp.rtt.controlBlockAddress": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Address of the SEGGER RTT control block (your firmware's `_SEGGER_RTT` symbol), e.g. `0x20000000`. J-Link locates this by scanning RAM and never reports it back, so supplying it is what allows RTT to be recovered after a target reset \u2014 without it, collection stops at the first reset and every later read looks like a quiet target."
+        }
+      }
+    },
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "jlinkMcp.mcpServer",
+        "label": "J-Link Debug Probe"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "bundle": "node esbuild.mjs",
+    "watch": "tsc -watch -p ./",
+    "build": "npm run compile && npm run bundle",
+    "prepublishOnly": "npm run build",
+    "vscode:prepublish": "npm run build",
+    "package": "npm run build && vsce package",
+    "lint": "tsc --noEmit",
+    "test": "npm run test:unit",
+    "test:unit": "npm run clean:test && tsc -p tsconfig.test.json && node --test out-test/test/unit/*.test.js",
+    "test:watch": "npm run clean:test && tsc -p tsconfig.test.json && node --test --watch out-test/test/unit/*.test.js",
+    "test:hil": "npm run clean:test && tsc -p tsconfig.test.json && node --test out-test/test/hil/*.test.js",
+    "clean:test": "node -e \"require('fs').rmSync('out-test',{recursive:true,force:true})\"",
+    "demo": "node demo/story.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "sax": "^1.6.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "@types/sax": "^1.2.7",
+    "@types/vscode": "^1.110.0",
+    "@vscode/vsce": "^3.7.1",
+    "esbuild": "^0.28.0",
+    "typescript": "^6.0.2"
+  },
+  "mcpName": "io.github.Klievan/jlink-mcp"
+}

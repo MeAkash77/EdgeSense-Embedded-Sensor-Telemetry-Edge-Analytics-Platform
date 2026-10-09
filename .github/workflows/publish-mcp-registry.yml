@@ -1,0 +1,99 @@
+# Publish this server to the MCP registry.
+#
+# Runs on a release tag. Authentication is GitHub OIDC against the
+# io.github.Klievan namespace, so there is no token to store or rotate — the
+# workflow's identity is the proof of ownership.
+name: Publish to MCP registry
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      # Required for OIDC. Without it, login fails with an auth error that
+      # reads like a bad namespace.
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci
+      - run: npm test
+
+      # Fail here rather than at the registry if the manifests have drifted.
+      # A version mismatch is rejected on publish with a message that does not
+      # say which file is wrong.
+      - name: Check server.json matches the tag
+        if: github.ref_type == 'tag'
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          manifest=$(node -p "require('./server.json').version")
+          if [ "$tag" != "$manifest" ]; then
+            echo "::error::tag $tag does not match server.json version $manifest"
+            exit 1
+          fi
+
+      # The real publisher is a Go binary released from the registry repo.
+      #
+      # NOT the npm package of the same name — that is an unrelated MCP server
+      # which starts on stdio, does nothing, and exits 0. A workflow built on
+      # it went green having published absolutely nothing, which is exactly the
+      # kind of silent success this project keeps having to dig out.
+      - name: Install mcp-publisher
+        run: |
+          set -euo pipefail
+          tag=$(curl -fsSL https://api.github.com/repos/modelcontextprotocol/registry/releases/latest | jq -r .tag_name)
+          echo "registry CLI $tag"
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/download/${tag}/mcp-publisher_linux_amd64.tar.gz" \
+            | tar -xz mcp-publisher
+          ./mcp-publisher --version
+
+      # The registry checks that the npm package actually exists at this
+      # version before it will list it, and rejects the publish otherwise:
+      #
+      #   NPM package 'jlink-mcp' exists, but version '0.6.0' was not found
+      #
+      # That is the right behaviour — a registry entry pointing at a version
+      # nobody can install is worse than no entry. Check it here so the run
+      # fails in two seconds naming the cause, rather than after login.
+      - name: Check the npm version is published
+        run: |
+          set -euo pipefail
+          name=$(node -p "require('./package.json').name")
+          want=$(node -p "require('./package.json').version")
+          if ! npm view "${name}@${want}" version >/dev/null 2>&1; then
+            echo "::error::${name}@${want} is not on npm yet. Publish it first — the registry will not list a version nobody can install."
+            exit 1
+          fi
+          echo "${name}@${want} is on npm"
+
+      - name: Publish
+        run: |
+          set -euo pipefail
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish
+
+      # A green publish step is not a listing. Ask the registry.
+      - name: Verify the server is actually listed
+        run: |
+          set -euo pipefail
+          name=$(node -p "require('./server.json').name")
+          want=$(node -p "require('./server.json').version")
+          for i in $(seq 1 10); do
+            got=$(curl -fsSL "https://registry.modelcontextprotocol.io/v0/servers?search=${name}" \
+              | jq -r --arg n "$name" '.servers[] | select(.server.name==$n) | .server.version' | head -1)
+            if [ "$got" = "$want" ]; then
+              echo "listed: $name $got"
+              exit 0
+            fi
+            echo "not listed yet (attempt $i, saw '${got:-nothing}')"
+            sleep 15
+          done
+          echo "::error::$name $want is not in the registry after publishing"
+          exit 1
